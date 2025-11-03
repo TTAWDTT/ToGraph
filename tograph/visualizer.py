@@ -151,13 +151,25 @@ class GraphVisualizer:
             )
         
         # Generate HTML
-        html_template = """
+        html_template = r"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    
+    <!-- Vis Network CDN with fallbacks -->
+    <link rel="stylesheet" href="https://unpkg.com/vis-network@9.1.2/dist/dist/vis-network.min.css" />
+    <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    
+    <!-- Fallback CDN if unpkg fails -->
+    <script>
+        if (typeof vis === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"><\/script>');
+        }
+    </script>
+    
     <style>
         body {
             margin: 0;
@@ -276,16 +288,18 @@ class GraphVisualizer:
         
         net.save_graph(temp_html_path)
         with open(temp_html_path, 'r') as f:
-            network_html = f.read()
+            pyvis_html = f.read()
         
         # Clean up temp file
         Path(temp_html_path).unlink()
         
-        # Extract just the network div and scripts
+        # Extract the network div and scripts
         match = re.search(r'(<div id="mynetwork".*?</div>.*?<script type="text/javascript">.*?</script>)', 
-                         network_html, re.DOTALL)
+                         pyvis_html, re.DOTALL)
         if match:
             network_html = match.group(1)
+        else:
+            network_html = pyvis_html
         
         # Render final template
         template = Template(html_template)
