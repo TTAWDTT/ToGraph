@@ -160,7 +160,7 @@ class GraphVisualizer:
     <title>{{ title }}</title>
     
     <!-- Vis Network CDN with fallbacks -->
-    <link rel="stylesheet" href="https://unpkg.com/vis-network@9.1.2/dist/dist/vis-network.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.css" />
     <script src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"></script>
     
     <!-- Fallback CDN if unpkg fails -->

@@ -5,7 +5,10 @@ import os
 import tempfile
 import shutil
 import uuid
+import time
+import atexit
 from pathlib import Path
+from threading import Lock
 from flask import Flask, render_template_string, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 from .parser import PDFParser, MarkdownParser
@@ -16,8 +19,47 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 
-# Store mapping of file IDs to paths
+# Store mapping of file IDs to (path, temp_dir, timestamp)
+# Files expire after 1 hour
 file_storage = {}
+storage_lock = Lock()
+FILE_EXPIRY_SECONDS = 3600  # 1 hour
+
+def cleanup_expired_files():
+    """Remove expired files from storage."""
+    current_time = time.time()
+    expired_ids = []
+    
+    with storage_lock:
+        for file_id, (filepath, temp_dir, timestamp) in list(file_storage.items()):
+            if current_time - timestamp > FILE_EXPIRY_SECONDS:
+                expired_ids.append(file_id)
+                # Clean up temporary directory
+                try:
+                    if os.path.exists(temp_dir):
+                        shutil.rmtree(temp_dir)
+                except Exception as e:
+                    print(f"Warning: Failed to clean up {temp_dir}: {e}")
+        
+        # Remove expired entries
+        for file_id in expired_ids:
+            del file_storage[file_id]
+    
+    return len(expired_ids)
+
+def cleanup_all_files():
+    """Clean up all temporary files on shutdown."""
+    with storage_lock:
+        for file_id, (filepath, temp_dir, timestamp) in file_storage.items():
+            try:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+            except Exception as e:
+                print(f"Warning: Failed to clean up {temp_dir}: {e}")
+        file_storage.clear()
+
+# Register cleanup on exit
+atexit.register(cleanup_all_files)
 
 # HTML template for the web interface
 HTML_TEMPLATE = r'''
@@ -519,9 +561,13 @@ def convert():
         output_path = os.path.join(temp_dir, output_filename)
         visualizer.save_html(output_path, theme=theme, title=title)
         
-        # Generate unique ID for this file
+        # Clean up expired files before adding new one
+        cleanup_expired_files()
+        
+        # Generate unique ID for this file and store with timestamp
         file_id = str(uuid.uuid4())
-        file_storage[file_id] = output_path
+        with storage_lock:
+            file_storage[file_id] = (output_path, temp_dir, time.time())
         
         return jsonify({
             'success': True,
@@ -541,10 +587,12 @@ def convert():
 def view_graph(file_id):
     """Serve the generated HTML file."""
     try:
-        if file_id not in file_storage:
-            return "File not found or expired", 404
+        with storage_lock:
+            if file_id not in file_storage:
+                return "File not found or expired", 404
+            
+            filepath, temp_dir, timestamp = file_storage[file_id]
         
-        filepath = file_storage[file_id]
         if not os.path.exists(filepath):
             return "File not found", 404
             
@@ -557,10 +605,12 @@ def view_graph(file_id):
 def download_graph(file_id):
     """Download the generated HTML file."""
     try:
-        if file_id not in file_storage:
-            return "File not found or expired", 404
+        with storage_lock:
+            if file_id not in file_storage:
+                return "File not found or expired", 404
+            
+            filepath, temp_dir, timestamp = file_storage[file_id]
         
-        filepath = file_storage[file_id]
         if not os.path.exists(filepath):
             return "File not found", 404
             
@@ -569,8 +619,15 @@ def download_graph(file_id):
         return f"Error downloading file: {str(e)}", 500
 
 
-def main(host='0.0.0.0', port=5000, debug=False):
-    """Run the web application."""
+def main(host='127.0.0.1', port=5000, debug=False):
+    """Run the web application.
+    
+    Args:
+        host: Host to bind to. Defaults to 127.0.0.1 (localhost only).
+              Use 0.0.0.0 to expose on all network interfaces.
+        port: Port to listen on. Defaults to 5000.
+        debug: Enable Flask debug mode. Defaults to False.
+    """
     print(f"""
 ╔══════════════════════════════════════════════════════════╗
 ║                    ToGraph Web Server                    ║
