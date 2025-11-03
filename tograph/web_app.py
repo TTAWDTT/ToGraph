@@ -580,7 +580,11 @@ def convert():
         })
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error internally but don't expose stack trace
+        print(f"Error during conversion: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during file conversion. Please try again.'}), 500
 
 
 @app.route('/view/<file_id>')
@@ -598,7 +602,9 @@ def view_graph(file_id):
             
         return send_file(filepath, mimetype='text/html')
     except Exception as e:
-        return f"Error loading graph: {str(e)}", 500
+        # Log error but don't expose details to user
+        print(f"Error viewing graph {file_id}: {e}")
+        return "Error loading graph", 500
 
 
 @app.route('/download/<file_id>')
@@ -616,7 +622,9 @@ def download_graph(file_id):
             
         return send_file(filepath, as_attachment=True, download_name='knowledge_graph.html')
     except Exception as e:
-        return f"Error downloading file: {str(e)}", 500
+        # Log error but don't expose details to user
+        print(f"Error downloading file {file_id}: {e}")
+        return "Error downloading file", 500
 
 
 def main(host='127.0.0.1', port=5000, debug=False):
