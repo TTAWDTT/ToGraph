@@ -63,7 +63,8 @@ class PDFParser:
         
         # Patterns for detecting headers
         title_pattern = re.compile(r'^[A-Z][A-Za-z\s]+$')
-        numbered_pattern = re.compile(r'^(\d+\.?)+\s+([A-Z].*)')
+        # Match patterns like "1." "1.1" "1.1.1" etc, but limit depth to avoid ReDoS
+        numbered_pattern = re.compile(r'^(\d+)(?:\.(\d+)?)?(?:\.(\d+)?)?(?:\.(\d+)?)?\s+([A-Z].*)')
         
         for line in lines:
             line = line.strip()
@@ -78,9 +79,11 @@ class PDFParser:
                     current_section.content = '\n'.join(section_content)
                     section_content = []
                 
-                number = numbered_match.group(1)
-                title = numbered_match.group(2)
-                level = number.count('.')
+                # Count how many number groups are present to determine level
+                # Groups: (1)(2)(3)(4)(title)
+                groups = numbered_match.groups()
+                level = sum(1 for g in groups[:4] if g is not None)
+                title = groups[4]  # Last group is always the title
                 
                 node = DocumentNode(title, level, '', position)
                 position += 1

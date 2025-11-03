@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #E0E0E0;
+        }
+        .header {
+            padding: 20px;
+            text-align: center;
+            background-color: #1a1a1a;
+            border-bottom: 2px solid #666666;
+        }
+        h1 {
+            margin: 0;
+            color: #E0E0E0;
+        }
+        .controls {
+            padding: 10px 20px;
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #666666;
+        }
+        .button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background-color: #3A7BC8;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            opacity: 0.8;
+        }
+        #mynetwork {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 300px;
+            display: none;
+        }
+        .info-panel.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Knowledge Graph</h1>
+    </div>
+    <div class="controls">
+        <button class="button" onclick="network.fit()">Fit to Screen</button>
+        <button class="button" onclick="togglePhysics()">Toggle Physics</button>
+        <button class="button" onclick="exportImage()">Export as Image</button>
+    </div>
+    <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"borderWidth": 2, "borderWidthSelected": 4, "color": "#3A7BC8", "font": {"color": "#E0E0E0"}, "id": "Introduction_to_Neural_Networks_0", "label": "Introduction to Neural Networks", "shape": "dot", "size": 27, "title": "No content"}, {"borderWidth": 2, "borderWidthSelected": 4, "color": "#3A7BC8", "font": {"color": "#E0E0E0"}, "id": "Abstract_1", "label": "Abstract", "shape": "dot", "size": 27, "title": "Different layer types serve different purposes. Dense layers connect all neurons, convolutional layers\nprocess spatial data, and recurrent layers handle sequential data. The architecture choice depends on\nthe problem domain.\n3. Training Process\nTraining adjusts network weights to minimize prediction..."}, {"borderWidth": 2, "borderWidthSelected": 4, "color": "#F39C12", "font": {"color": "#E0E0E0"}, "id": "Biological_Inspiration_2", "label": "Biological Inspiration", "shape": "dot", "size": 24, "title": "No content"}, {"borderWidth": 2, "borderWidthSelected": 4, "color": "#F39C12", "font": {"color": "#E0E0E0"}, "id": "Activation_Functions_3", "label": "Activation Functions", "shape": "dot", "size": 24, "title": "No content"}, {"borderWidth": 2, "borderWidthSelected": 4, "color": "#F39C12", "font": {"color": "#E0E0E0"}, "id": "Layer_Types_4", "label": "Layer Types", "shape": "dot", "size": 24, "title": "No content"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "#666666", "dashes": false, "from": "Abstract_1", "title": "contains", "to": "Biological_Inspiration_2", "width": 2}, {"arrows": "to", "color": "#666666", "dashes": false, "from": "Abstract_1", "title": "contains", "to": "Activation_Functions_3", "width": 2}, {"arrows": "to", "color": "#666666", "dashes": false, "from": "Abstract_1", "title": "contains", "to": "Layer_Types_4", "width": 2}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"enabled": true, "barnesHut": {"gravitationalConstant": -8000, "centralGravity": 0.3, "springLength": 150, "springConstant": 0.04, "damping": 0.09, "avoidOverlap": 0.1}, "stabilization": {"enabled": true, "iterations": 200}}, "nodes": {"font": {"size": 14, "face": "arial"}}, "edges": {"color": {"inherit": false}, "smooth": {"enabled": true, "type": "continuous"}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    <div id="info-panel" class="info-panel">
+        <h3 id="info-title">Node Information</h3>
+        <p id="info-content">Click on a node to see details</p>
+    </div>
+    
+    <script type="text/javascript">
+        var physicsEnabled = true;
+        
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            network.setOptions({physics: {enabled: physicsEnabled}});
+        }
+        
+        function exportImage() {
+            alert('Use browser screenshot or print to PDF functionality to save the graph');
+        }
+        
+        // Add click event for nodes
+        network.on("click", function(params) {
+            if (params.nodes.length > 0) {
+                var nodeId = params.nodes[0];
+                var node = network.body.data.nodes.get(nodeId);
+                var panel = document.getElementById('info-panel');
+                var title = document.getElementById('info-title');
+                var content = document.getElementById('info-content');
+                
+                title.textContent = node.label || nodeId;
+                content.textContent = node.title || 'No additional information';
+                panel.classList.add('visible');
+            } else {
+                document.getElementById('info-panel').classList.remove('visible');
+            }
+        });
+        
+        // Close info panel when clicking outside
+        network.on("click", function(params) {
+            if (params.nodes.length === 0) {
+                document.getElementById('info-panel').classList.remove('visible');
+            }
+        });
+    </script>
+</body>
+</html>
+        
