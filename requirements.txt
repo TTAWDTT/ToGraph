@@ -18,6 +18,9 @@ pillow==10.1.0
 # HTML/CSS Generation
 jinja2==3.1.2
 
+# Web Server
+flask==3.0.0
+
 # PDF Generation
 reportlab==4.0.7
 weasyprint==60.1

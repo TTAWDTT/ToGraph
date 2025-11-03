@@ -37,12 +37,19 @@ output/
 examples_output/
 test_output/
 test_review/
+*.html
+*.png
+*.pdf
 
 # Generated example files (can be regenerated)
 examples/sample_paper.pdf
 
 # Test files
 test_output/
+
+# Web app temporary files
+uploads/
+temp/
 
 # OS
 .DS_Store

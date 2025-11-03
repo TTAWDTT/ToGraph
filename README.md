@@ -4,6 +4,7 @@ Convert PDF and Markdown documents to beautiful, interactive knowledge graphs wi
 
 ## Features
 
+- 🌐 **Web Interface**: Beautiful drag-and-drop interface for easy file upload and instant visualization
 - 📄 **Multiple Input Formats**: Support for PDF and Markdown files
 - 🎨 **Beautiful Visualizations**: Clean, professional-looking knowledge graphs
 - 🌓 **Day/Night Themes**: Switch between light and dark color schemes
@@ -11,6 +12,7 @@ Convert PDF and Markdown documents to beautiful, interactive knowledge graphs wi
 - 🖱️ **Interactive HTML**: Mouse hover to display original text content
 - 🔗 **Smart Relationships**: Automatically detects hierarchical and related connections
 - 🚀 **Pure Code Implementation**: No AI dependencies, fast and reliable
+- ✅ **Standalone HTML Files**: Generated files work independently with embedded CDN links
 
 ## Installation
 
@@ -42,7 +44,26 @@ pip install git+https://github.com/TTAWDTT/ToGraph.git
 
 ## Usage
 
-### Basic Usage
+### Web Interface (Recommended)
+
+The easiest way to use ToGraph is through the web interface:
+
+```bash
+# Start the web server
+tograph-web
+
+# Or specify custom host/port
+tograph-web --host 0.0.0.0 --port 8080
+```
+
+Then open your browser to `http://localhost:5000` and:
+1. Upload your PDF or Markdown file (drag & drop supported)
+2. Choose theme (light/dark) and customize the title
+3. Click "Generate Knowledge Graph"
+4. View the interactive graph directly in your browser
+5. Download the HTML file for offline use
+
+### Command-Line Interface
 
 ```bash
 # Convert PDF to interactive HTML with light theme
