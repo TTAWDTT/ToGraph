@@ -36,9 +36,9 @@ ENV/
 output/
 examples_output/
 test_output/
-*.png
-*.pdf
-*.html
+
+# Generated example files (can be regenerated)
+examples/sample_paper.pdf
 
 # Test files
 test_output/
