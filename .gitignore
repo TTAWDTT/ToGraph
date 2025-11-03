@@ -36,6 +36,7 @@ ENV/
 output/
 examples_output/
 test_output/
+test_review/
 
 # Generated example files (can be regenerated)
 examples/sample_paper.pdf
