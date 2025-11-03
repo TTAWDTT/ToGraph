@@ -1,6 +1,8 @@
 """Visualize knowledge graphs with multiple output formats."""
 
 import json
+import re
+import tempfile
 from pathlib import Path
 from typing import Dict
 import networkx as nx
@@ -9,6 +11,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from PIL import Image, ImageDraw, ImageFont
 from jinja2 import Template
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 
 
 class GraphVisualizer:
@@ -266,12 +271,17 @@ class GraphVisualizer:
         """
         
         # Generate network HTML
-        net.save_graph("/tmp/temp_graph.html")
-        with open("/tmp/temp_graph.html", 'r') as f:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as tmp_file:
+            temp_html_path = tmp_file.name
+        
+        net.save_graph(temp_html_path)
+        with open(temp_html_path, 'r') as f:
             network_html = f.read()
         
+        # Clean up temp file
+        Path(temp_html_path).unlink()
+        
         # Extract just the network div and scripts
-        import re
         match = re.search(r'(<div id="mynetwork".*?</div>.*?<script type="text/javascript">.*?</script>)', 
                          network_html, re.DOTALL)
         if match:
@@ -405,13 +415,10 @@ class GraphVisualizer:
         output_path = Path(output_path)
         
         # First create PNG at high resolution
-        temp_png = "/tmp/temp_graph_for_pdf.png"
-        self.save_png(temp_png, theme=theme, dpi=300)
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
+            temp_png = tmp_file.name
         
-        # Convert PNG to PDF using reportlab
-        from reportlab.lib.pagesizes import A4, landscape
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.utils import ImageReader
+        self.save_png(temp_png, theme=theme, dpi=300)
         
         # Create PDF
         c = canvas.Canvas(str(output_path), pagesize=landscape(A4))
@@ -427,5 +434,8 @@ class GraphVisualizer:
         c.drawImage(img, 50, 50, width=700, height=450, preserveAspectRatio=True)
         
         c.save()
+        
+        # Clean up temp file
+        Path(temp_png).unlink()
         
         print(f"PDF saved to: {output_path}")

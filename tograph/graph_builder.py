@@ -1,6 +1,7 @@
 """Build knowledge graph from parsed documents."""
 
 import re
+from collections import Counter
 from typing import List, Dict, Set, Tuple
 import networkx as nx
 from .parser import DocumentNode
@@ -108,7 +109,6 @@ class GraphBuilder:
         filtered = [w for w in words if w not in stopwords and len(w) > 4]
         
         # Return most common terms
-        from collections import Counter
         counter = Counter(filtered)
         return set([term for term, count in counter.most_common(10)])
     
