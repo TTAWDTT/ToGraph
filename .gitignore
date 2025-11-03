@@ -34,6 +34,8 @@ ENV/
 
 # Output files
 output/
+examples_output/
+test_output/
 *.png
 *.pdf
 *.html
