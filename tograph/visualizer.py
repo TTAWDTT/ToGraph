@@ -20,6 +20,14 @@ from reportlab.lib.utils import ImageReader
 class GraphVisualizer:
     """Visualize knowledge graphs in multiple formats."""
     
+    # Performance optimization constants
+    MAX_LABEL_LENGTH = 30  # Maximum characters for node labels in 3D view
+    MAX_HOVER_CONTENT_LENGTH = 200  # Maximum characters for hover content
+    SPHERE_SEGMENTS = 16  # Number of segments for 3D spheres (lower = better performance)
+    SPRING_LAYOUT_ITERATIONS = 30  # Iterations for spring layout algorithm
+    PHYSICS_STABILIZATION_ITERATIONS = 150  # Iterations for 2D physics stabilization
+    PHYSICS_UPDATE_INTERVAL = 50  # Update interval for physics simulation
+    
     # Color schemes with enhanced deep blue theme
     THEMES = {
         'light': {
@@ -66,8 +74,7 @@ class GraphVisualizer:
         if visualization_mode == "mindmap":
             pos = self._calculate_mindmap_layout()
         else:
-            # Reduced iterations from 50 to 30 for faster calculation
-            pos = nx.spring_layout(self.graph, dim=3, k=2, iterations=30, seed=42) if len(self.graph.nodes()) > 0 else {}
+            pos = nx.spring_layout(self.graph, dim=3, k=2, iterations=self.SPRING_LAYOUT_ITERATIONS, seed=42) if len(self.graph.nodes()) > 0 else {}
         
         # Add nodes with 3D positions
         for node_id, attrs in self.graph.nodes(data=True):
@@ -95,9 +102,9 @@ class GraphVisualizer:
                 color = colors['highlight']
                 size = 15
             
-            # Truncate content for display (reduced from 300 to 200 for performance)
-            hover_content = content[:200] if content else "No content"
-            if len(content) > 200:
+            # Truncate content for display
+            hover_content = content[:self.MAX_HOVER_CONTENT_LENGTH] if content else "No content"
+            if len(content) > self.MAX_HOVER_CONTENT_LENGTH:
                 hover_content += "..."
             
             nodes_data.append({
@@ -194,6 +201,8 @@ class GraphVisualizer:
         """Generate HTML template with Three.js for 3D visualization."""
         nodes_json = json.dumps(nodes)
         edges_json = json.dumps(edges)
+        sphere_segments = self.SPHERE_SEGMENTS
+        max_label_length = self.MAX_LABEL_LENGTH
         
         return f'''<!DOCTYPE html>
 <html lang="en">
@@ -505,8 +514,8 @@ class GraphVisualizer:
         
         function createNodes() {{
             nodesData.forEach(node => {{
-                // Create sphere for node (reduced segments from 32 to 16 for performance)
-                const geometry = new THREE.SphereGeometry(node.size, 16, 16);
+                // Create sphere for node (optimized segment count for performance)
+                const geometry = new THREE.SphereGeometry(node.size, {sphere_segments}, {sphere_segments});
                 const material = new THREE.MeshPhongMaterial({{
                     color: node.color,
                     emissive: node.color,
@@ -523,8 +532,8 @@ class GraphVisualizer:
                 
                 nodeObjects[node.id] = sphere;
                 
-                // Add glow effect (reduced segments from 32 to 16 for performance)
-                const glowGeometry = new THREE.SphereGeometry(node.size * 1.2, 16, 16);
+                // Add glow effect (optimized segment count for performance)
+                const glowGeometry = new THREE.SphereGeometry(node.size * 1.2, {sphere_segments}, {sphere_segments});
                 const glowMaterial = new THREE.MeshBasicMaterial({{
                     color: node.color,
                     transparent: true,
@@ -541,8 +550,9 @@ class GraphVisualizer:
         
         function createLabel(text, position, color) {{
             // Truncate long labels for better performance
-            if (text.length > 30) {{
-                text = text.substring(0, 30) + '...';
+            const maxLength = {max_label_length};
+            if (text.length > maxLength) {{
+                text = text.substring(0, maxLength) + '...';
             }}
             
             const canvas = document.createElement('canvas');
@@ -820,8 +830,8 @@ class GraphVisualizer:
                 }},
                 "stabilization": {{
                     "enabled": true,
-                    "iterations": 150,
-                    "updateInterval": 50
+                    "iterations": {self.PHYSICS_STABILIZATION_ITERATIONS},
+                    "updateInterval": {self.PHYSICS_UPDATE_INTERVAL}
                 }},
                 "maxVelocity": 30,
                 "minVelocity": 1.0
@@ -899,9 +909,9 @@ class GraphVisualizer:
             else:
                 color = colors['highlight']
             
-            # Truncate content for hover (reduced from 300 to 200 for performance)
-            hover_content = content[:200] if content else "No content"
-            if len(content) > 200:
+            # Truncate content for hover
+            hover_content = content[:self.MAX_HOVER_CONTENT_LENGTH] if content else "No content"
+            if len(content) > self.MAX_HOVER_CONTENT_LENGTH:
                 hover_content += "..."
             
             net.add_node(

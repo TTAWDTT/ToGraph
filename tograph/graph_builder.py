@@ -26,6 +26,8 @@ class GraphBuilder:
         self.graph = nx.DiGraph()
         self.entity_content = {}  # Map entities to their content
         self.max_relationships_per_node = 3  # Limit connections to prevent clutter
+        self.large_graph_threshold = 50  # Consider graph "large" if more than this many nodes
+        self.large_graph_max_level = 2  # For large graphs, only extract relationships for nodes up to this level
         
     def build(self) -> nx.DiGraph:
         """Build the knowledge graph."""
@@ -88,9 +90,9 @@ class GraphBuilder:
         nodes = list(self.graph.nodes(data=True))
         
         # Limit total nodes to process for performance
-        if len(nodes) > 50:
+        if len(nodes) > self.large_graph_threshold:
             # For large graphs, only extract relationships for top-level nodes
-            nodes = [(nid, attrs) for nid, attrs in nodes if attrs.get('level', 1) <= 2]
+            nodes = [(nid, attrs) for nid, attrs in nodes if attrs.get('level', 1) <= self.large_graph_max_level]
         
         # Extract key terms from each node
         node_terms = {}
@@ -139,8 +141,8 @@ class GraphBuilder:
         # Limit text length for processing
         text = text[:1000]  # Only analyze first 1000 characters
         
-        # Simple extraction: words longer than 5 characters, not too common
-        words = re.findall(r'\b[A-Za-z]{6,}\b', text.lower())  # Increased from 5 to 6
+        # Simple extraction: words with 6+ characters for better specificity
+        words = re.findall(r'\b[A-Za-z]{6,}\b', text.lower())
         
         # Common words to exclude (expanded list)
         stopwords = {
@@ -159,8 +161,8 @@ class GraphBuilder:
             'otherwise', 'whereas', 'whereby', 'wherein', 'herein', 'therein'
         }
         
-        # Filter and count (limit to most frequent for performance)
-        filtered = [w for w in words if w not in stopwords and len(w) > 5]
+        # Filter out stopwords (length already guaranteed >= 6 by regex)
+        filtered = [w for w in words if w not in stopwords]
         
         # Return fewer key terms (reduced from 10 to 5)
         counter = Counter(filtered)
