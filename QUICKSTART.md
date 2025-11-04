@@ -9,6 +9,30 @@ Get started with ToGraph in 5 minutes!
 git clone https://github.com/TTAWDTT/ToGraph.git && cd ToGraph && pip install -r requirements.txt && pip install -e .
 ```
 
+## Two Ways to Use ToGraph
+
+### Option 1: Web Interface (Easiest! ⭐ Recommended)
+
+```bash
+# Start the web server
+tograph-web
+```
+
+Then open http://localhost:5000 in your browser and:
+1. Drag & drop your PDF or Markdown file
+2. Choose theme and title
+3. Click "Generate"
+4. View the interactive graph instantly!
+5. Download the HTML file if you want to keep it
+
+**Perfect for**: Quick conversions, trying out ToGraph, visual exploration
+
+See [WEB_GUIDE.md](WEB_GUIDE.md) for detailed web interface documentation.
+
+### Option 2: Command-Line Interface
+
+For automation, batch processing, or advanced users.
+
 ## Basic Usage
 
 ### 1. Convert Markdown to Interactive HTML

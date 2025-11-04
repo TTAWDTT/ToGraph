@@ -25,6 +25,7 @@ setup(
     entry_points={
         "console_scripts": [
             "tograph=tograph.main:main",
+            "tograph-web=tograph.web_app:main",
         ],
     },
 )
