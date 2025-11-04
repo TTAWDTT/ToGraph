@@ -73,6 +73,8 @@ def convert(request):
         # Get parameters
         theme = request.POST.get('theme', 'light')
         title = request.POST.get('title', 'Knowledge Graph')
+        visualization = request.POST.get('visualization', '2d')  # '2d' or '3d'
+        viz_mode = request.POST.get('viz_mode', 'graph')  # 'graph' or 'mindmap'
         
         # Sanitize filename to prevent path traversal attacks
         from werkzeug.utils import secure_filename
@@ -113,11 +115,15 @@ def convert(request):
         graph = builder.build()
         entity_content = builder.get_entity_content()
         
-        # Generate HTML
+        # Generate HTML with selected visualization mode
         visualizer = GraphVisualizer(graph, entity_content)
         output_filename = f"graph_{os.path.basename(filename).rsplit('.', 1)[0]}.html"
         output_path = os.path.join(temp_dir, output_filename)
-        visualizer.save_html(output_path, theme=theme, title=title)
+        
+        # Choose visualization mode
+        use_3d = (visualization == '3d')
+        visualizer.save_html(output_path, theme=theme, title=title, 
+                           visualization_mode=viz_mode, use_3d=use_3d)
         
         # Clean up expired files before adding new one
         cleanup_expired_files()
