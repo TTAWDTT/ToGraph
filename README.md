@@ -2,9 +2,22 @@
 
 Convert PDF and Markdown documents to beautiful, interactive knowledge graphs with day and night themes.
 
+## ✨ New: Django Framework with Enhanced UI
+
+ToGraph now includes a **Django-based web application** with a stunning deep blue theme and improved features!
+
+- 🎨 **Gorgeous Deep Blue Theme**: Modern, elegant interface with gradient effects
+- ✨ **Animated UI**: Particle backgrounds and smooth transitions
+- 🌐 **3D Visualization Ready**: Support for both 2D and 3D graph views
+- 🚀 **Enhanced PDF Parsing**: Better section detection and content extraction
+- 📊 **Optimized Layout**: Improved graph physics and visual depth
+- 🌍 **Chinese Interface**: Fully localized for Chinese users
+
+👉 See [DJANGO_GUIDE.md](DJANGO_GUIDE.md) for Django version documentation
+
 ## Features
 
-- 🌐 **Web Interface**: Beautiful drag-and-drop interface for easy file upload and instant visualization
+- 🌐 **Dual Web Frameworks**: Choose between Flask (simple) or Django (full-featured)
 - 📄 **Multiple Input Formats**: Support for PDF and Markdown files
 - 🎨 **Beautiful Visualizations**: Clean, professional-looking knowledge graphs
 - 🌓 **Day/Night Themes**: Switch between light and dark color schemes
@@ -44,9 +57,31 @@ pip install git+https://github.com/TTAWDTT/ToGraph.git
 
 ## Usage
 
-### Web Interface (Recommended)
+### Django Web Interface (New & Recommended)
 
-The easiest way to use ToGraph is through the web interface:
+Start the enhanced Django server with deep blue theme:
+
+```bash
+# Quick start
+./run_django.sh
+
+# Or manually
+python manage.py runserver
+```
+
+Then open your browser to `http://localhost:8000` and:
+1. Upload your PDF or Markdown file (drag & drop supported)
+2. Choose theme (dark theme with deep blue recommended)
+3. Select visualization type (2D or 3D)
+4. Click "生成知识图谱" (Generate Knowledge Graph)
+5. View the interactive graph with beautiful animations
+6. Download the HTML file for offline use
+
+See [DJANGO_GUIDE.md](DJANGO_GUIDE.md) for detailed Django documentation.
+
+### Flask Web Interface (Classic)
+
+The original Flask interface is still available:
 
 ```bash
 # Start the web server
