@@ -2,13 +2,15 @@
 
 Convert PDF and Markdown documents to beautiful, interactive knowledge graphs with day and night themes.
 
-## ✨ New: Django Framework with Enhanced UI
+## ✨ New: Django Framework with Enhanced UI & 3D Visualization
 
-ToGraph now includes a **Django-based web application** with a stunning deep blue theme and improved features!
+ToGraph now includes a **Django-based web application** with stunning visualizations and multiple viewing modes!
 
 - 🎨 **Gorgeous Deep Blue Theme**: Modern, elegant interface with gradient effects
 - ✨ **Animated UI**: Particle backgrounds and smooth transitions
-- 🌐 **3D Visualization Ready**: Support for both 2D and 3D graph views
+- 🌐 **Full 3D Visualization**: Interactive 3D knowledge graphs powered by Three.js
+- 🧠 **Mind Map Mode**: Generate intuitive, radial mind maps from your documents
+- 🎮 **Enhanced Interactions**: Search, filter, auto-rotate, and smooth camera controls
 - 🚀 **Enhanced PDF Parsing**: Better section detection and content extraction
 - 📊 **Optimized Layout**: Improved graph physics and visual depth
 - 🌍 **Chinese Interface**: Fully localized for Chinese users
@@ -17,15 +19,31 @@ ToGraph now includes a **Django-based web application** with a stunning deep blu
 
 ## Features
 
+### Visualization Modes
+- 🌐 **2D Knowledge Graphs**: Traditional force-directed network visualization
+- 🎯 **3D Knowledge Graphs**: Fully interactive 3D visualization with Three.js
+- 🧠 **2D Mind Maps**: Hierarchical radial layout for clear structure
+- 🌟 **3D Mind Maps**: Spatial mind mapping with depth and perspective
+
+### Core Features
 - 🌐 **Dual Web Frameworks**: Choose between Flask (simple) or Django (full-featured)
 - 📄 **Multiple Input Formats**: Support for PDF and Markdown files
-- 🎨 **Beautiful Visualizations**: Clean, professional-looking knowledge graphs
+- 🎨 **Beautiful Visualizations**: Clean, professional-looking graphs with multiple modes
 - 🌓 **Day/Night Themes**: Switch between light and dark color schemes
 - 📊 **Multiple Output Formats**: HTML (interactive), PNG (high-resolution), and PDF
 - 🖱️ **Interactive HTML**: Mouse hover to display original text content
 - 🔗 **Smart Relationships**: Automatically detects hierarchical and related connections
 - 🚀 **Pure Code Implementation**: No AI dependencies, fast and reliable
 - ✅ **Standalone HTML Files**: Generated files work independently with embedded CDN links
+
+### 3D Visualization Controls
+- 🎮 **Orbit Controls**: Left-click drag to rotate, right-click to pan, scroll to zoom
+- 🔍 **Search & Filter**: Real-time node search with highlighting
+- 🔄 **Auto-Rotate**: Optional automatic rotation for presentations
+- 🎯 **Focus Mode**: Double-click nodes to smoothly focus camera
+- 📐 **Smart Fitting**: Auto-fit all nodes in view
+- 🏷️ **Toggle Labels**: Show/hide node labels for cleaner views
+- ⚡ **Animation Speed Control**: Adjust rotation and animation speeds
 
 ## Installation
 
@@ -73,9 +91,18 @@ Then open your browser to `http://localhost:8000` and:
 1. Upload your PDF or Markdown file (drag & drop supported)
 2. Choose theme (dark theme with deep blue recommended)
 3. Select visualization type (2D or 3D)
-4. Click "生成知识图谱" (Generate Knowledge Graph)
-5. View the interactive graph with beautiful animations
-6. Download the HTML file for offline use
+4. Choose display mode (Knowledge Graph or Mind Map)
+5. Click "生成知识图谱" (Generate Knowledge Graph)
+6. Interact with the 3D visualization using mouse controls
+7. Download the HTML file for offline use
+
+**3D Visualization Tips:**
+- Use left-click + drag to rotate the view
+- Right-click + drag to pan the camera
+- Scroll to zoom in/out
+- Double-click a node to focus on it
+- Use the search box to find specific nodes
+- Toggle auto-rotate for presentations
 
 See [DJANGO_GUIDE.md](DJANGO_GUIDE.md) for detailed Django documentation.
 
