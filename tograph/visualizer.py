@@ -62,11 +62,12 @@ class GraphVisualizer:
         nodes_data = []
         edges_data = []
         
-        # Calculate node positions based on visualization mode
+        # Calculate node positions based on visualization mode (optimized iterations)
         if visualization_mode == "mindmap":
             pos = self._calculate_mindmap_layout()
         else:
-            pos = nx.spring_layout(self.graph, dim=3, k=2, iterations=50, seed=42) if len(self.graph.nodes()) > 0 else {}
+            # Reduced iterations from 50 to 30 for faster calculation
+            pos = nx.spring_layout(self.graph, dim=3, k=2, iterations=30, seed=42) if len(self.graph.nodes()) > 0 else {}
         
         # Add nodes with 3D positions
         for node_id, attrs in self.graph.nodes(data=True):
@@ -94,9 +95,9 @@ class GraphVisualizer:
                 color = colors['highlight']
                 size = 15
             
-            # Truncate content for display
-            hover_content = content[:300] if content else "No content"
-            if len(content) > 300:
+            # Truncate content for display (reduced from 300 to 200 for performance)
+            hover_content = content[:200] if content else "No content"
+            if len(content) > 200:
                 hover_content += "..."
             
             nodes_data.append({
@@ -504,8 +505,8 @@ class GraphVisualizer:
         
         function createNodes() {{
             nodesData.forEach(node => {{
-                // Create sphere for node
-                const geometry = new THREE.SphereGeometry(node.size, 32, 32);
+                // Create sphere for node (reduced segments from 32 to 16 for performance)
+                const geometry = new THREE.SphereGeometry(node.size, 16, 16);
                 const material = new THREE.MeshPhongMaterial({{
                     color: node.color,
                     emissive: node.color,
@@ -522,8 +523,8 @@ class GraphVisualizer:
                 
                 nodeObjects[node.id] = sphere;
                 
-                // Add glow effect
-                const glowGeometry = new THREE.SphereGeometry(node.size * 1.2, 32, 32);
+                // Add glow effect (reduced segments from 32 to 16 for performance)
+                const glowGeometry = new THREE.SphereGeometry(node.size * 1.2, 16, 16);
                 const glowMaterial = new THREE.MeshBasicMaterial({{
                     color: node.color,
                     transparent: true,
@@ -539,15 +540,21 @@ class GraphVisualizer:
         }}
         
         function createLabel(text, position, color) {{
+            // Truncate long labels for better performance
+            if (text.length > 30) {{
+                text = text.substring(0, 30) + '...';
+            }}
+            
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-            canvas.width = 256;
-            canvas.height = 64;
+            // Reduced canvas size from 256x64 to 200x50 for performance
+            canvas.width = 200;
+            canvas.height = 50;
             
             context.fillStyle = 'rgba(26, 49, 98, 0.8)';
             context.fillRect(0, 0, canvas.width, canvas.height);
             
-            context.font = 'Bold 24px Arial';
+            context.font = 'Bold 20px Arial';  // Reduced font size from 24 to 20
             context.fillStyle = color;
             context.textAlign = 'center';
             context.textBaseline = 'middle';
@@ -558,7 +565,7 @@ class GraphVisualizer:
             const sprite = new THREE.Sprite(material);
             
             sprite.position.set(position.x, position.y + 30, position.z);
-            sprite.scale.set(100, 25, 1);
+            sprite.scale.set(80, 20, 1);  // Reduced scale for smaller labels
             
             scene.add(sprite);
             labelSprites.push(sprite);
@@ -727,13 +734,8 @@ class GraphVisualizer:
             
             controls.update();
             
-            // Pulse effect for nodes
-            const time = Date.now() * 0.001;
-            Object.values(nodeObjects).forEach((node, index) => {{
-                if (node !== selectedNode) {{
-                    node.material.emissiveIntensity = 0.2 + Math.sin(time + index) * 0.05;
-                }}
-            }});
+            // Removed pulse effect for better performance
+            // The constant animation was causing lag on larger graphs
             
             renderer.render(scene, camera);
         }}
@@ -809,20 +811,20 @@ class GraphVisualizer:
             "physics": {{
                 "enabled": true,
                 "barnesHut": {{
-                    "gravitationalConstant": -12000,
-                    "centralGravity": 0.5,
-                    "springLength": 200,
-                    "springConstant": 0.02,
-                    "damping": 0.15,
-                    "avoidOverlap": 0.3
+                    "gravitationalConstant": -8000,
+                    "centralGravity": 0.3,
+                    "springLength": 150,
+                    "springConstant": 0.04,
+                    "damping": 0.2,
+                    "avoidOverlap": 0.2
                 }},
                 "stabilization": {{
                     "enabled": true,
-                    "iterations": 300,
-                    "updateInterval": 25
+                    "iterations": 150,
+                    "updateInterval": 50
                 }},
-                "maxVelocity": 50,
-                "minVelocity": 0.75
+                "maxVelocity": 30,
+                "minVelocity": 1.0
             }},
             "nodes": {{
                 "font": {{
@@ -897,9 +899,9 @@ class GraphVisualizer:
             else:
                 color = colors['highlight']
             
-            # Truncate content for hover
-            hover_content = content[:300] if content else "No content"
-            if len(content) > 300:
+            # Truncate content for hover (reduced from 300 to 200 for performance)
+            hover_content = content[:200] if content else "No content"
+            if len(content) > 200:
                 hover_content += "..."
             
             net.add_node(
