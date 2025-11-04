@@ -26,6 +26,16 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-573lqr*^(*+4$)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
+# Warn if using insecure default secret key in production
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    import warnings
+    warnings.warn(
+        "Using insecure default SECRET_KEY in production! "
+        "Please set DJANGO_SECRET_KEY environment variable.",
+        RuntimeWarning,
+        stacklevel=2
+    )
+
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 

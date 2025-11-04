@@ -17,9 +17,10 @@ def main():
         ) from exc
     
     # If running server, set default host and port
+    # Default to localhost for security, use 0.0.0.0 explicitly if needed
     if len(sys.argv) >= 2 and sys.argv[1] == 'runserver':
         if len(sys.argv) == 2:
-            sys.argv.append('0.0.0.0:8000')
+            sys.argv.append('127.0.0.1:8000')
     
     execute_from_command_line(sys.argv)
 

@@ -10,6 +10,21 @@ from bs4 import BeautifulSoup
 
 
 # Compile regex patterns once at module level for performance
+
+# NUMBERED_PATTERN matches section headings like:
+# - "1. Introduction" (level 1)
+# - "1.1 Background" (level 2)
+# - "Chapter 5 Methods" (level 1 with keyword)
+# - "Section 2.3.1: Details" (level 3 with colon)
+# Pattern breakdown:
+# - ^(?:Chapter|Section|Part|Article)? : Optional keyword prefix
+# - \s* : Optional whitespace
+# - (\d+) : First number (required, group 1)
+# - (?:\.(\d+))? : Optional second number (group 2)
+# - (?:\.(\d+))? : Optional third number (group 3)
+# - (?:\.(\d+))? : Optional fourth number (group 4)
+# - \s*[-:]?\s* : Optional separator (dash or colon)
+# - ([A-Z].*) : Title starting with capital letter (group 5)
 NUMBERED_PATTERN = re.compile(r'^(?:Chapter|Section|Part|Article)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?\s*[-:]?\s*([A-Z].*)', re.IGNORECASE)
 ROMAN_PATTERN = re.compile(r'^([IVXLCDM]+)\.\s+([A-Z].*)')
 TITLE_PATTERN = re.compile(r'^[A-Z][A-Za-z\s\-]+$')
