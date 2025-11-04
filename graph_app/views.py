@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import uuid
 import time
+import logging
 from pathlib import Path
 from threading import Lock
 from django.shortcuts import render
@@ -14,8 +15,14 @@ from tograph.parser import PDFParser, MarkdownParser
 from tograph.graph_builder import GraphBuilder
 from tograph.visualizer import GraphVisualizer
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 # Store mapping of file IDs to (path, temp_dir, timestamp)
 # Files expire after 1 hour
+# NOTE: This in-memory storage is suitable for single-process development servers.
+# For production with multiple workers, consider using Django's cache framework
+# with Redis/Memcached, or storing file references in the database.
 file_storage = {}
 storage_lock = Lock()
 FILE_EXPIRY_SECONDS = 3600  # 1 hour
@@ -35,7 +42,7 @@ def cleanup_expired_files():
                     if os.path.exists(temp_dir):
                         shutil.rmtree(temp_dir)
                 except Exception as e:
-                    print(f"Warning: Failed to clean up {temp_dir}: {e}")
+                    logger.warning(f"Failed to clean up {temp_dir}: {e}")
         
         # Remove expired entries
         for file_id in expired_ids:
@@ -124,9 +131,7 @@ def convert(request):
         
     except Exception as e:
         # Log the error internally but don't expose stack trace
-        print(f"Error during conversion: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.exception(f"Error during conversion: {e}")
         return JsonResponse({'error': 'An error occurred during file conversion. Please try again.'}, status=500)
 
 
@@ -147,7 +152,7 @@ def view_graph(request, file_id):
         
         return HttpResponse(content, content_type='text/html')
     except Exception as e:
-        print(f"Error viewing graph {file_id}: {e}")
+        logger.error(f"Error viewing graph {file_id}: {e}")
         return HttpResponse("Error loading graph", status=500)
 
 
@@ -167,5 +172,5 @@ def download_graph(request, file_id):
         response['Content-Disposition'] = 'attachment; filename="knowledge_graph.html"'
         return response
     except Exception as e:
-        print(f"Error downloading file {file_id}: {e}")
+        logger.error(f"Error downloading file {file_id}: {e}")
         return HttpResponse("Error downloading file", status=500)

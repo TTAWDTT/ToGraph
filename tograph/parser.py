@@ -9,6 +9,14 @@ from markdown.extensions import tables, fenced_code
 from bs4 import BeautifulSoup
 
 
+# Compile regex patterns once at module level for performance
+NUMBERED_PATTERN = re.compile(r'^(?:Chapter|Section|Part|Article)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?\s*[-:]?\s*([A-Z].*)', re.IGNORECASE)
+ROMAN_PATTERN = re.compile(r'^([IVXLCDM]+)\.\s+([A-Z].*)')
+TITLE_PATTERN = re.compile(r'^[A-Z][A-Za-z\s\-]+$')
+HEADER_PATTERN = re.compile(r'^[=\-#*]{2,}$')
+MD_HEADER_PATTERN = re.compile(r'^(#{1,6})\s+(.+)$')
+
+
 class DocumentNode:
     """Represents a node in the document structure."""
     
@@ -62,16 +70,6 @@ class PDFParser:
         section_content = []
         position = 0
         
-        # Enhanced patterns for detecting headers
-        # Match numbered sections: "1.", "1.1", "1.1.1", "Chapter 1", "Section 2.3"
-        numbered_pattern = re.compile(r'^(?:Chapter|Section|Part|Article)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?\s*[-:]?\s*([A-Z].*)', re.IGNORECASE)
-        # Match Roman numerals: "I.", "II.", "III.", etc.
-        roman_pattern = re.compile(r'^([IVXLCDM]+)\.\s+([A-Z].*)')
-        # Match all-caps or title case headers (improved)
-        title_pattern = re.compile(r'^[A-Z][A-Za-z\s\-]+$')
-        # Match headers with special formatting
-        header_pattern = re.compile(r'^[=\-#*]{2,}$')
-        
         prev_line = ''
         for i, line in enumerate(lines):
             line = line.strip()
@@ -79,7 +77,7 @@ class PDFParser:
                 continue
             
             # Check if previous line was a header indicator (underline)
-            if header_pattern.match(line):
+            if HEADER_PATTERN.match(line):
                 if prev_line and len(prev_line) > 3:
                     # Previous line was a header
                     if current_section:
@@ -96,7 +94,7 @@ class PDFParser:
                     continue
             
             # Check for numbered sections
-            numbered_match = numbered_pattern.match(line)
+            numbered_match = NUMBERED_PATTERN.match(line)
             if numbered_match:
                 # Save previous section content
                 if current_section:
@@ -132,8 +130,8 @@ class PDFParser:
                     current_subsubsection.add_child(node)
                     
             # Check for Roman numeral sections
-            elif roman_pattern.match(line):
-                roman_match = roman_pattern.match(line)
+            elif ROMAN_PATTERN.match(line):
+                roman_match = ROMAN_PATTERN.match(line)
                 if current_section:
                     current_section.content = '\n'.join(section_content)
                     section_content = []
@@ -147,7 +145,7 @@ class PDFParser:
                 current_subsubsection = None
                     
             # Check for title case headers (stricter criteria)
-            elif (title_pattern.match(line) and 
+            elif (TITLE_PATTERN.match(line) and 
                   len(line) > 3 and 
                   len(line.split()) >= 2 and 
                   len(line.split()) <= 8 and
@@ -239,10 +237,8 @@ class MarkdownParser:
         current_content = []
         position = 0
         
-        header_pattern = re.compile(r'^(#{1,6})\s+(.+)$')
-        
         for line in lines:
-            header_match = header_pattern.match(line)
+            header_match = MD_HEADER_PATTERN.match(line)
             
             if header_match:
                 # Process accumulated content

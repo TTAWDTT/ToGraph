@@ -41,6 +41,9 @@ test_review/
 *.png
 *.pdf
 
+# Environment variables
+.env
+
 # Generated example files (can be regenerated)
 examples/sample_paper.pdf
 
