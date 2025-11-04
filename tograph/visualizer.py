@@ -1,6 +1,7 @@
 """Visualize knowledge graphs with multiple output formats."""
 
 import json
+import math
 import re
 import tempfile
 from pathlib import Path
@@ -163,7 +164,6 @@ class GraphVisualizer:
         visited = {root}
         queue = [(root, 0, 0)]  # (node, angle_start, radius)
         
-        import math
         while queue:
             parent, angle_base, radius = queue.pop(0)
             
@@ -800,6 +800,10 @@ class GraphVisualizer:
             }
             node_shape = "box"
         
+        # Convert layout config to JSON string
+        layout_json = json.dumps(layout_config)
+        smooth_type = 'curvedCW' if visualization_mode == 'mindmap' else 'cubicBezier'
+        
         net.set_options(f"""
         {{
             "physics": {{
@@ -844,7 +848,7 @@ class GraphVisualizer:
                 }},
                 "smooth": {{
                     "enabled": true,
-                    "type": "{'curvedCW' if visualization_mode == 'mindmap' else 'cubicBezier'}",
+                    "type": "{smooth_type}",
                     "roundness": 0.5
                 }},
                 "arrows": {{
@@ -871,7 +875,7 @@ class GraphVisualizer:
                 "zoomView": true,
                 "dragView": true
             }},
-            "layout": {json.dumps(layout_config)}
+            "layout": {layout_json}
         }}
         """)
         
