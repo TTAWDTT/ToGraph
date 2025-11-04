@@ -1,0 +1,766 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToGraph - 3D知识图谱可视化平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --deep-blue: #0a1931;
+            --medium-blue: #185adb;
+            --light-blue: #4a90e2;
+            --accent-blue: #00d9ff;
+            --dark-bg: #050d1a;
+            --card-bg: rgba(26, 49, 98, 0.7);
+            --text-primary: #e8f4fd;
+            --text-secondary: #a8c5da;
+            --success: #00ff88;
+            --warning: #ffa500;
+            --error: #ff4757;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--deep-blue) 50%, #0d2847 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-100px) translateX(50px);
+            }
+            50% {
+                transform: translateY(-200px) translateX(-50px);
+            }
+            75% {
+                transform: translateY(-100px) translateX(100px);
+            }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, rgba(26, 90, 219, 0.2) 0%, rgba(0, 217, 255, 0.1) 100%);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 217, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.3));
+            }
+            to {
+                filter: drop-shadow(0 0 20px rgba(0, 217, 255, 0.6));
+            }
+        }
+        
+        .header .subtitle {
+            font-size: 1.3em;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .header .icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: rotate3d 10s linear infinite;
+        }
+        
+        @keyframes rotate3d {
+            0% {
+                transform: rotateY(0deg);
+            }
+            100% {
+                transform: rotateY(360deg);
+            }
+        }
+        
+        .upload-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 50px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(74, 144, 226, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(0, 217, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), 0 0 80px rgba(0, 217, 255, 0.2);
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--medium-blue);
+            border-radius: 15px;
+            padding: 80px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(10, 25, 49, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        
+        .upload-area:hover::before {
+            opacity: 0.1;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 217, 255, 0.05);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 217, 255, 0.2);
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: rgba(0, 255, 136, 0.05);
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 5em;
+            margin-bottom: 25px;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+        
+        .upload-text {
+            font-size: 1.5em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .upload-hint {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .options {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        
+        .option-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .option-group label {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-size: 1.1em;
+        }
+        
+        .option-group select,
+        .option-group input {
+            padding: 15px;
+            border: 2px solid var(--medium-blue);
+            border-radius: 10px;
+            font-size: 1em;
+            background: rgba(10, 25, 49, 0.6);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .option-group select:focus,
+        .option-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: rgba(10, 25, 49, 0.8);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+        
+        .option-group select option {
+            background: var(--deep-blue);
+            color: var(--text-primary);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, var(--medium-blue) 0%, var(--accent-blue) 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 30px;
+            width: 100%;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+            transform: translate(-50%, -50%);
+        }
+        
+        .button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(-1px);
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(74, 144, 226, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-section.visible {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(74, 144, 226, 0.3);
+        }
+        
+        .result-title {
+            font-size: 1.8em;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, var(--success) 0%, #00cc70 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 25px;
+            background: rgba(10, 25, 49, 0.6);
+            border-radius: 15px;
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 25px rgba(0, 217, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .graph-container {
+            width: 100%;
+            height: 750px;
+            border: 2px solid rgba(74, 144, 226, 0.4);
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(5, 13, 26, 0.8);
+            box-shadow: inset 0 0 50px rgba(0, 217, 255, 0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            display: none;
+        }
+        
+        .loading.visible {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(74, 144, 226, 0.2);
+            border-top: 4px solid var(--accent-blue);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: var(--text-primary);
+            font-size: 1.3em;
+            margin-top: 20px;
+        }
+        
+        .error-message {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--error);
+            border: 2px solid var(--error);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            display: none;
+        }
+        
+        .error-message.visible {
+            display: block;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+            padding: 30px 0;
+        }
+        
+        .feature-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(74, 144, 226, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 15px 40px rgba(0, 217, 255, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .feature-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="icon">🌐</div>
+            <h1>ToGraph 3D</h1>
+            <p class="subtitle">智能文档知识图谱可视化平台</p>
+        </div>
+        
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">点击上传或拖拽文件至此</div>
+                    <div class="upload-hint">支持 PDF 和 Markdown 格式 (最大 16MB)</div>
+                    <input type="file" id="fileInput" name="file" class="file-input" accept=".pdf,.md,.markdown">
+                </div>
+                
+                <div class="options">
+                    <div class="option-group">
+                        <label for="theme">主题风格：</label>
+                        <select id="theme" name="theme">
+                            <option value="light">浅色主题</option>
+                            <option value="dark" selected>深色主题</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="title">图谱标题：</label>
+                        <input type="text" id="title" name="title" value="知识图谱" placeholder="输入图谱标题">
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="visualization">可视化类型：</label>
+                        <select id="visualization" name="visualization">
+                            <option value="3d">3D 立体视图</option>
+                            <option value="2d">2D 平面视图</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="button" id="generateBtn">
+                    <span style="position: relative; z-index: 1;">🚀 生成知识图谱</span>
+                </button>
+            </form>
+            
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">正在处理您的文档...</p>
+        </div>
+        
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <div class="result-title">📊 您的知识图谱</div>
+                <button class="download-btn" id="downloadBtn">下载 HTML</button>
+            </div>
+            
+            <div class="stats" id="stats"></div>
+            
+            <div class="graph-container">
+                <iframe id="graphFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <div class="feature-title">精美可视化</div>
+                <div class="feature-desc">采用深蓝色主题，提供2D和3D立体视图，交互流畅</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-title">智能分析</div>
+                <div class="feature-desc">自动识别文档结构，提取关键概念和关系</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">快速处理</div>
+                <div class="feature-desc">无需AI依赖，纯代码实现，快速可靠</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">多格式支持</div>
+                <div class="feature-desc">支持PDF和Markdown，输出HTML、PNG、PDF</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Create animated particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadForm = document.getElementById('uploadForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('resultSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const graphFrame = document.getElementById('graphFrame');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const statsDiv = document.getElementById('stats');
+        
+        let currentFileId = null;
+        
+        // Upload area interactions
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateUploadArea(files[0].name);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateUploadArea(e.target.files[0].name);
+            }
+        });
+        
+        function updateUploadArea(filename) {
+            uploadArea.querySelector('.upload-text').textContent = filename;
+            uploadArea.querySelector('.upload-hint').textContent = '文件已选择 - 准备生成！';
+        }
+        
+        // Form submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showError('请先选择一个文件！');
+                return;
+            }
+            
+            const formData = new FormData(uploadForm);
+            
+            // Show loading, hide results and errors
+            loading.classList.add('visible');
+            resultSection.classList.remove('visible');
+            errorMessage.classList.remove('visible');
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/convert/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentFileId = data.file_id;
+                    showResult(data);
+                } else {
+                    showError(data.error || '转换过程中发生错误');
+                }
+            } catch (error) {
+                showError('无法连接到服务器: ' + error.message);
+            } finally {
+                loading.classList.remove('visible');
+                generateBtn.disabled = false;
+            }
+        });
+        
+        function showResult(data) {
+            // Update stats
+            statsDiv.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${data.stats.nodes}</div>
+                    <div class="stat-label">节点数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.stats.edges}</div>
+                    <div class="stat-label">边数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${data.stats.sections}</div>
+                    <div class="stat-label">章节数</div>
+                </div>
+            `;
+            
+            // Load graph in iframe
+            graphFrame.src = '/view/' + data.file_id + '/';
+            
+            // Show result section
+            resultSection.classList.add('visible');
+            
+            // Scroll to results
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+        }
+        
+        // Download button
+        downloadBtn.addEventListener('click', () => {
+            if (currentFileId) {
+                window.location.href = '/download/' + currentFileId + '/';
+            }
+        });
+    </script>
+</body>
+</html>
