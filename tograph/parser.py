@@ -53,37 +53,65 @@ class PDFParser:
         return self.nodes
     
     def _extract_structure(self, text: str) -> List[DocumentNode]:
-        """Extract hierarchical structure from text."""
+        """Extract hierarchical structure from text with improved detection."""
         lines = text.split('\n')
         nodes = []
         current_section = None
         current_subsection = None
+        current_subsubsection = None
         section_content = []
         position = 0
         
-        # Patterns for detecting headers
-        title_pattern = re.compile(r'^[A-Z][A-Za-z\s]+$')
-        # Match patterns like "1." "1.1" "1.1.1" etc, but limit depth to avoid ReDoS
-        numbered_pattern = re.compile(r'^(\d+)(?:\.(\d+)?)?(?:\.(\d+)?)?(?:\.(\d+)?)?\s+([A-Z].*)')
+        # Enhanced patterns for detecting headers
+        # Match numbered sections: "1.", "1.1", "1.1.1", "Chapter 1", "Section 2.3"
+        numbered_pattern = re.compile(r'^(?:Chapter|Section|Part|Article)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?\s*[-:]?\s*([A-Z].*)', re.IGNORECASE)
+        # Match Roman numerals: "I.", "II.", "III.", etc.
+        roman_pattern = re.compile(r'^([IVXLCDM]+)\.\s+([A-Z].*)')
+        # Match all-caps or title case headers (improved)
+        title_pattern = re.compile(r'^[A-Z][A-Za-z\s\-]+$')
+        # Match headers with special formatting
+        header_pattern = re.compile(r'^[=\-#*]{2,}$')
         
-        for line in lines:
+        prev_line = ''
+        for i, line in enumerate(lines):
             line = line.strip()
             if not line:
                 continue
-                
-            # Check for numbered sections (e.g., "1. Introduction", "1.1 Background")
+            
+            # Check if previous line was a header indicator (underline)
+            if header_pattern.match(line):
+                if prev_line and len(prev_line) > 3:
+                    # Previous line was a header
+                    if current_section:
+                        current_section.content = '\n'.join(section_content)
+                        section_content = []
+                    
+                    node = DocumentNode(prev_line, 1, '', position)
+                    position += 1
+                    nodes.append(node)
+                    current_section = node
+                    current_subsection = None
+                    current_subsubsection = None
+                    prev_line = line
+                    continue
+            
+            # Check for numbered sections
             numbered_match = numbered_pattern.match(line)
             if numbered_match:
-                # Save previous section
+                # Save previous section content
                 if current_section:
-                    current_section.content = '\n'.join(section_content)
+                    if current_subsubsection:
+                        current_subsubsection.content = '\n'.join(section_content)
+                    elif current_subsection:
+                        current_subsection.content = '\n'.join(section_content)
+                    else:
+                        current_section.content = '\n'.join(section_content)
                     section_content = []
                 
-                # Count how many number groups are present to determine level
-                # Groups: (1)(2)(3)(4)(title)
+                # Determine level based on numbering
                 groups = numbered_match.groups()
                 level = sum(1 for g in groups[:4] if g is not None)
-                title = groups[4]  # Last group is always the title
+                title = groups[4].strip()
                 
                 node = DocumentNode(title, level, '', position)
                 position += 1
@@ -92,33 +120,87 @@ class PDFParser:
                     nodes.append(node)
                     current_section = node
                     current_subsection = None
+                    current_subsubsection = None
                 elif level == 2 and current_section:
                     current_section.add_child(node)
                     current_subsection = node
-                elif level > 2 and current_subsection:
+                    current_subsubsection = None
+                elif level == 3 and current_subsection:
                     current_subsection.add_child(node)
+                    current_subsubsection = node
+                elif level > 3 and current_subsubsection:
+                    current_subsubsection.add_child(node)
                     
-            # Check for all-caps or title case headers
-            elif title_pattern.match(line) and len(line) > 3 and len(line.split()) <= 5:
+            # Check for Roman numeral sections
+            elif roman_pattern.match(line):
+                roman_match = roman_pattern.match(line)
                 if current_section:
                     current_section.content = '\n'.join(section_content)
                     section_content = []
                 
-                node = DocumentNode(line, 1, '', position)
+                title = roman_match.group(2).strip()
+                node = DocumentNode(title, 1, '', position)
                 position += 1
                 nodes.append(node)
                 current_section = node
                 current_subsection = None
+                current_subsubsection = None
+                    
+            # Check for title case headers (stricter criteria)
+            elif (title_pattern.match(line) and 
+                  len(line) > 3 and 
+                  len(line.split()) >= 2 and 
+                  len(line.split()) <= 8 and
+                  not line.endswith('.') and
+                  not line.endswith(',') and
+                  len(line) < 100):
+                # Only treat as header if it looks like a title
+                if current_section:
+                    if current_subsection:
+                        current_subsection.content = '\n'.join(section_content)
+                    else:
+                        current_section.content = '\n'.join(section_content)
+                    section_content = []
+                
+                node = DocumentNode(line, 2 if current_section else 1, '', position)
+                position += 1
+                
+                if current_section:
+                    current_section.add_child(node)
+                    current_subsection = node
+                    current_subsubsection = None
+                else:
+                    nodes.append(node)
+                    current_section = node
+                    current_subsection = None
+                    current_subsubsection = None
             else:
                 section_content.append(line)
+            
+            prev_line = line
         
         # Save last section
         if current_section:
-            current_section.content = '\n'.join(section_content)
+            if current_subsubsection:
+                current_subsubsection.content = '\n'.join(section_content)
+            elif current_subsection:
+                current_subsection.content = '\n'.join(section_content)
+            else:
+                current_section.content = '\n'.join(section_content)
         
-        # If no structure found, create a single node
+        # If no structure found, try to create structure from content
         if not nodes:
-            nodes.append(DocumentNode("Document", 1, text, 0))
+            # Try to split by paragraphs and create pseudo-sections
+            paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+            if len(paragraphs) > 1:
+                for i, para in enumerate(paragraphs[:10]):  # Limit to first 10 paragraphs
+                    # Use first line or first 50 chars as title
+                    first_line = para.split('\n')[0]
+                    title = first_line[:50] + '...' if len(first_line) > 50 else first_line
+                    node = DocumentNode(title or f"Section {i+1}", 1, para, i)
+                    nodes.append(node)
+            else:
+                nodes.append(DocumentNode("Document", 1, text, 0))
             
         return nodes
     

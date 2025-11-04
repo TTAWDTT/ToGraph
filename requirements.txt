@@ -20,6 +20,7 @@ jinja2==3.1.2
 
 # Web Server
 flask==3.0.0
+django==4.2.7
 
 # PDF Generation
 reportlab==4.0.7

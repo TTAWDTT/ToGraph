@@ -51,6 +51,12 @@ test_output/
 uploads/
 temp/
 
+# Django files
+db.sqlite3
+media/
+staticfiles/
+*.log
+
 # OS
 .DS_Store
 Thumbs.db
