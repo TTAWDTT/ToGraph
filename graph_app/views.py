@@ -74,15 +74,23 @@ def convert(request):
         theme = request.POST.get('theme', 'light')
         title = request.POST.get('title', 'Knowledge Graph')
         
-        # Check file extension
-        filename = file.name
+        # Sanitize filename to prevent path traversal attacks
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(file.name)
+        
+        # Validate filename after sanitization
+        if not filename:
+            return JsonResponse({'error': 'Invalid filename'}, status=400)
+        
         file_ext = Path(filename).suffix.lower()
         
         if file_ext not in ['.pdf', '.md', '.markdown']:
             return JsonResponse({'error': 'Invalid file format. Please upload PDF or Markdown files.'}, status=400)
         
         # Create temporary directory for this conversion
+        # tempfile.mkdtemp() creates a secure isolated directory
         temp_dir = tempfile.mkdtemp()
+        # secure_filename ensures no directory traversal
         input_path = os.path.join(temp_dir, filename)
         
         # Save uploaded file
