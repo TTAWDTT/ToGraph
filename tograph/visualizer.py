@@ -19,7 +19,7 @@ from reportlab.lib.utils import ImageReader
 class GraphVisualizer:
     """Visualize knowledge graphs in multiple formats."""
     
-    # Color schemes
+    # Color schemes with enhanced deep blue theme
     THEMES = {
         'light': {
             'background': '#ffffff',
@@ -31,13 +31,13 @@ class GraphVisualizer:
             'accent': '#F39C12',
         },
         'dark': {
-            'background': '#1a1a1a',
-            'node': '#3A7BC8',
-            'node_border': '#5DADE2',
-            'text': '#E0E0E0',
-            'edge': '#666666',
-            'highlight': '#E74C3C',
-            'accent': '#F39C12',
+            'background': '#0a1931',  # Deep blue background
+            'node': '#185adb',  # Medium blue for nodes
+            'node_border': '#00d9ff',  # Accent blue for borders
+            'text': '#e8f4fd',  # Light blue text
+            'edge': '#4a90e2',  # Light blue edges
+            'highlight': '#00ff88',  # Green highlight
+            'accent': '#00d9ff',  # Accent cyan
         }
     }
     
@@ -59,29 +59,44 @@ class GraphVisualizer:
             directed=True
         )
         
-        # Configure physics
+        # Configure physics with improved layout
         net.set_options("""
         {
             "physics": {
                 "enabled": true,
                 "barnesHut": {
-                    "gravitationalConstant": -8000,
-                    "centralGravity": 0.3,
-                    "springLength": 150,
-                    "springConstant": 0.04,
-                    "damping": 0.09,
-                    "avoidOverlap": 0.1
+                    "gravitationalConstant": -12000,
+                    "centralGravity": 0.5,
+                    "springLength": 200,
+                    "springConstant": 0.02,
+                    "damping": 0.15,
+                    "avoidOverlap": 0.3
                 },
                 "stabilization": {
                     "enabled": true,
-                    "iterations": 200
-                }
+                    "iterations": 300,
+                    "updateInterval": 25
+                },
+                "maxVelocity": 50,
+                "minVelocity": 0.75
             },
             "nodes": {
                 "font": {
-                    "size": 14,
-                    "face": "arial"
-                }
+                    "size": 16,
+                    "face": "Arial, sans-serif",
+                    "strokeWidth": 4,
+                    "strokeColor": "#000000"
+                },
+                "borderWidth": 3,
+                "shadow": {
+                    "enabled": true,
+                    "color": "rgba(0, 217, 255, 0.5)",
+                    "size": 10,
+                    "x": 0,
+                    "y": 0
+                },
+                "shape": "box",
+                "margin": 10
             },
             "edges": {
                 "color": {
@@ -89,7 +104,37 @@ class GraphVisualizer:
                 },
                 "smooth": {
                     "enabled": true,
-                    "type": "continuous"
+                    "type": "cubicBezier",
+                    "roundness": 0.5
+                },
+                "arrows": {
+                    "to": {
+                        "enabled": true,
+                        "scaleFactor": 1.2
+                    }
+                },
+                "shadow": {
+                    "enabled": true,
+                    "color": "rgba(74, 144, 226, 0.3)",
+                    "size": 5,
+                    "x": 0,
+                    "y": 0
+                }
+            },
+            "interaction": {
+                "hover": true,
+                "navigationButtons": true,
+                "keyboard": {
+                    "enabled": true
+                },
+                "tooltipDelay": 100,
+                "zoomView": true,
+                "dragView": true
+            },
+            "layout": {
+                "improvedLayout": true,
+                "hierarchical": {
+                    "enabled": false
                 }
             }
         }

@@ -41,6 +41,9 @@ test_review/
 *.png
 *.pdf
 
+# Environment variables
+.env
+
 # Generated example files (can be regenerated)
 examples/sample_paper.pdf
 
@@ -50,6 +53,12 @@ test_output/
 # Web app temporary files
 uploads/
 temp/
+
+# Django files
+db.sqlite3
+media/
+staticfiles/
+*.log
 
 # OS
 .DS_Store

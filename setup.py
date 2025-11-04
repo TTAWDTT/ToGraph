@@ -26,6 +26,7 @@ setup(
         "console_scripts": [
             "tograph=tograph.main:main",
             "tograph-web=tograph.web_app:main",
+            "tograph-django=tograph_project.manage:main",
         ],
     },
 )
